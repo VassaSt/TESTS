@@ -1,0 +1,142 @@
+reearth.ui.show(`
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap');
+
+  html,
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: "Roboto";
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 120%;
+  }
+
+  button {
+    cursor: pointer;
+    border-radius: 4px;
+    border: none;
+    box-shadow: 1px 1px 4px 0px rgba(124, 124, 124, 0.20);
+    color: #ffffff;
+    margin-bottom: 5px;
+    background-color: #4c00ff;
+  }
+
+  #wrapper {
+    box-sizing: border-box;
+    max-width: 210px;
+    max-height: 560px;
+    border-radius: 4px;
+    background-color: #ffffff;
+    padding: 12px;
+    border-radius: 4px;
+    overflow: auto;
+  }
+
+  #start-btn {
+    display: block;
+    width: 100%;
+    padding: 4px 24px;
+  }
+</style>
+<div id="wrapper">
+  <button id="start-btn"> START </button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<script>
+  let reearth, cesium, property, layers, layerId;
+  const btn = document.getElementById("start-btn");
+  const czml = [
+    {
+      id: "document",
+      name: "CZML Geometries: Circles and Ellipses",
+      version: "1.0",
+    },
+    {
+      id: "shape1",
+      name: "Green circle at height",
+      position: {
+        cartographicDegrees: [-111.0, 40.0, 150000.0],
+      },
+      ellipse: {
+        semiMinorAxis: 300000.0,
+        semiMajorAxis: 300000.0,
+        height: 200000.0,
+        material: {
+          solidColor: {
+            color: {
+              rgba: [0, 255, 0, 255],
+            },
+          },
+        },
+      },
+    },
+  ];
+
+
+
+  window.addEventListener("message", async function (e) {
+    if (e.source !== parent) return;
+    reearth = e.source.reearth;
+    layers = reearth.layers.layers;
+    cesium = reearth.Cesium;
+    newProperty = e.data.property;
+
+  });
+
+
+
+  btn.addEventListener('click', loadData);
+
+  function loadData() {
+    czmlInLayer(czml)
+  }
+
+  function czmlInLayer(czml) {
+
+    if (layerId) {
+      reearth.layers.overrideProperty(layerId, {
+        data: {
+          url: czml,
+        }
+      })
+    } else {
+      layerId = reearth.layers.add({
+        type: "simple",
+
+        // 1. how to load data
+        data: {
+          type: "czml",
+          url: czml,
+        },
+      });
+
+    }
+
+
+    reearth.camera.lookAt({
+      lng: czml[1].position.cartographicDegrees[0],
+      lat: czml[1].position.cartographicDegrees[1],
+      height: 1500000.0,
+      pitch: -1.5,
+    }, {
+      duration: 2
+    });
+
+    console.log(layerId);
+  }
+
+</script>
+`,);
+
+reearth.on("update", send);
+send();
+
+function send() {
+reearth.ui.postMessage({
+property: reearth.widget.property,
+layer: reearth.layers.layers
+})
+}
