@@ -198,11 +198,54 @@ const weatherData = await getWeather();
 const rain = weatherData.hourly.rain;
 const temperature = weatherData.hourly.temperature_2m;
 const time = weatherData.hourly.time;
-console.log(weatherData);
+console.log(rain[0]);
 
+setLayer()
 
     // czmlInLayer(czml)
   }
+
+function setLayer() {
+  reearth.layers.add({
+  // always same
+  type: "simple",
+
+  // 1. how to load data
+  data: { 
+    type: "geojson",
+    value: { // GeoJSON
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+        longValue,
+        latValue,
+          0
+        ],
+        "type": "Point"
+      }
+    }
+  },
+
+  // 2. how to style
+  marker: {
+    // if there are no styles, default style is used
+    image: "https://github.com/VassaSt/TESTS/blob/main/src/src/typcn_weather-sunny.png",
+  imageSize: 1,
+  }
+});
+
+    reearth.camera.flyTo({
+        lng: longValue,
+        lat:latValue,
+        height: 10000,
+        pitch: -1.5,
+    }, {
+        duration: 2
+    });
+}
+
+
+
 
   function czmlInLayer(czml) {
 
