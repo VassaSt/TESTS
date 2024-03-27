@@ -33,6 +33,10 @@ reearth.ui.show(`
     overflow: auto;
   }
 
+  #search {
+    margin: 8px 0;
+  }
+
   #start-btn {
     display: block;
     width: 100%;
@@ -40,143 +44,43 @@ reearth.ui.show(`
   }
 </style>
 <div id="wrapper">
+  <label for="search">Search: </label>
+  <input id="search" type="text">
+
   <button id="start-btn"> START </button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
 <script>
-  let reearth, cesium, property, layers, layerId;
-  const btn = document.getElementById("start-btn");
+  let reearth, cesium, property, layers, layerId
+  let newDay = new Date();
+
+  const btn = document.getElementById("start-btn")
+
   let czml = [
-  {
-    id: "document",
-    name: "CZML Polygon - Interpolating References",
-    version: "1.0",
-  }]
-// let czml = [
-//   {
-//     id: "document",
-//     name: "CZML Polygon - Interpolating References",
-//     version: "1.0",
-//   },
-//   {
-//     id: "dynamicPolygon",
-//     name: "Dynamic Polygon with Reference Properties",
-//     availability: "2012-08-04T16:00:00Z/2012-08-04T17:00:00Z",
-//     polygon: {
-//       positions: {
-//         references: ["v1#position", "v2#position", "v3#position"],
-//       },
-//       perPositionHeight: true,
-//       material: {
-//         solidColor: {
-//           color: [
-//             {
-//               interval: "2012-08-04T16:00:00Z/2012-08-04T16:19:60Z",
-//               rgba: [255, 0, 0, 255],
-//             },
-//             {
-//               interval: "2012-08-04T16:20:00Z/2012-08-04T16:29:60Z",
-//               rgba: [0, 255, 0, 200],
-//             },
-//             {
-//               interval: "2012-08-04T16:30:00Z/2012-08-04T17:00:00Z",
-//               rgba: [0, 0, 255, 155],
-//             },
-//           ],
-//         },
-//       },
-//     },
-//   },
-//   {
-//     id: "v1",
-//     position: {
-//       interpolationAlgorithm: "LINEAR",
-//       interpolationDegree: 1,
-//       interval: "2012-08-04T16:00:00Z/2012-08-04T17:00:00Z",
-//       epoch: "2012-08-04T16:00:00Z",
-//       cartographicDegrees: [
-//         0,
-//         -60,
-//         35,
-//         30000,
-//         160,
-//         -65,
-//         35,
-//         5000000,
-//         400,
-//         -70,
-//         40,
-//         20000,
-//         800,
-//         -62,
-//         45,
-//         200000,
-//         1800,
-//         -65,
-//         40,
-//         650000,
-//         3600,
-//         -60,
-//         35,
-//         3000,
-//       ],
-//     },
-//   },
-//   {
-//     id: "v2",
-//     position: {
-//       interval: "2012-08-04T16:00:00Z/2012-08-04T17:00:00Z",
-//       cartographicDegrees: [-45.0, 20, 4000000],
-//     },
-//   },
-//   {
-//     id: "v3",
-//     position: {
-//       interpolationAlgorithm: "LINEAR",
-//       interpolationDegree: 1,
-//       interval: "2012-08-04T16:00:00Z/2012-08-04T17:00:00Z",
-//       epoch: "2012-08-04T16:00:00Z",
-//       cartographicDegrees: [
-//         0,
-//         -45,
-//         60,
-//         4000,
-//         400,
-//         -40,
-//         70,
-//         2000000,
-//         1000,
-//         -35,
-//         75,
-//         100000,
-//         3600,
-//         -45,
-//         65,
-//         3000,
-//       ],
-//     },
-//   },
-// ];
+    {
+      id: "document",
+      name: "CZML Polygon - Interpolating References",
+      version: "1.0",
+    }]
 
-let latValue = "52.52";
-let longValue = "13.41";
-let start = "2024-03-02";
-let end = "2024-03-16";
-let params = "temperature_2m,rain";
+  let latValue = "52.52";
+  let longValue = "13.41";
+  let start = "2024-03-16";
+  let end = "2024-03-16";
+  let params = "temperature_2m,relative_humidity_2m,rain";
+  //Temperature, Precipitation, Humidity, Wind, Sunlight,　Frost, Hail, Relative humidity, Soil moisture, Clouds, 
 
-
-  window.addEventListener("message", async function (e) {
+  window.addEventListener("message", function (e) {
     if (e.source !== parent) return;
-    reearth = e.source.reearth;
+    reearth = e.source.reearth
     layers = reearth.layers.layers;
     cesium = reearth.Cesium;
-    newProperty = e.data.property;
-  });
+  })
 
   async function getWeather() {
-    let apiUrl = "https://archive-api.open-meteo.com/v1/archive?latitude="+ latValue + "&longitude=" + longValue + "&start_date=" + start + "&end_date=" + end + "&hourly=" + params;
+    let apiUrl = "https://archive-api.open-meteo.com/v1/archive?latitude=" + latValue + "&longitude=" + longValue + "&start_date=" + start + "&end_date=" + end + "&hourly=" + params;
 
     try {
       const response = await fetch(apiUrl);
@@ -188,97 +92,153 @@ let params = "temperature_2m,rain";
     }
   }
 
+  function timeSet(item) {
+    let date = new Date(item);
+    // let result = new Date(date + date.getTimezoneOffset())
+    return date.toJSON();
+  }
+
+  function setLableObj(item) {
+    let result = {
+      text: item,
+      font: "18px Roboto",
+      showBackground: false,
+      horizontalOrigin: "CENTER",
+      VerticalOrigin: "TOP",
+      style: "FILL",
+      fillColor: {
+        rgba: [255, 255, 255, 255],
+      },
+      outlineWidth: 2,
+      pixelOffset: {
+        cartesian2: [0, 15],
+      },
+    }
+    return result;
+  }
+
+  function czmlObject(i, item, time, coords, color) {
+    let height = item * 1000;
+    //TO DO: create from latValue, longValue more 3 points for polygon
+    let result = {
+      id: i,
+      name: item,
+      availability: time,
+      polygon: {
+        positions: {
+          cartographicDegrees: coords,
+        },
+        material: {
+          solidColor: {
+            color: {
+              rgba: color,
+            },
+          },
+        },
+        height: 0,
+        extrudedHeight: height,
+      },
+    }
+
+    return result
+  }
+
+  function getCoords(center) {
+    const radius = 10;
+    const options = { steps: 4, units: 'kilometers' };
+    const circle = turf.circle(center, radius, options);
+    const coordsArray = circle.geometry.coordinates[0]
+    return [coordsArray[0][0], coordsArray[0][1], 0, coordsArray[1][0], coordsArray[1][1], 0, coordsArray[2][0], coordsArray[2][1], 0, coordsArray[3][0], coordsArray[3][1], 0]
+  }
+
+  function getCoords2(center) {
+    let radius = 10;
+    const options = { steps: 4, units: 'kilometers' };
+    const circle = turf.circle(center, radius, options);
+    const center2 = circle.geometry.coordinates[0][0]
+    const radius2 = 10;
+    const circle2 = turf.circle(center2, radius2, options);
+    const coordsArray = circle2.geometry.coordinates[0]
+    return [coordsArray[0][0], coordsArray[0][1], 0, coordsArray[1][0], coordsArray[1][1], 0, coordsArray[2][0], coordsArray[2][1], 0, coordsArray[3][0], coordsArray[3][1], 0]
+  }
 
 
   btn.addEventListener('click', loadData);
 
- async function loadData() {
-const weatherData = await getWeather();
+  function setCzml(data) {
+    let center = [longValue, latValue];
+    let coords = getCoords(center)
+    let center2 = [coords[3], coords[4]]
+    let coords2 = getCoords2(center2)
+    let center3 = [coords2[3], coords2[4]]
+    let coords3 = getCoords2(center3)
 
-const rain = weatherData.hourly.rain;
-const temperature = weatherData.hourly.temperature_2m;
-const time = weatherData.hourly.time;
-console.log(rain[0]);
+    for (let i = 0; i < data.time.length; i++) {
+      // const element = data.time[i];
+      const rain = data.rain[i];
+      let temperature = data.temperature_2m[i];
+      let humidity =data.relative_humidity_2m[i]
 
-setLayer()
+      let startTime = timeSet(data.time[i]);
+      let endTime = timeSet(new Date(data.time[i]).setMilliseconds(new Date(data.time[i]).getMilliseconds() + 3.6e+6));
+      let time = startTime + "/" + endTime;
 
-    // czmlInLayer(czml)
-  }
+      let x = "T_" + i;
+      let obj = czmlObject(x, temperature, time, coords, [0, 0, 255, 185])
+      // TO DO one more object for lable (point or box)
+      // obj.label = setLableObj(temperature)
 
-function setLayer() {
-  reearth.layers.add({
-  // always same
-  type: "simple",
+      let y = "R_" + i;
+      let obj2 = czmlObject(y, rain, time, coords2, [0, 255, 0, 185])
+      // obj2.label = setLableObj(rain)
+      // czml.push(obj)
+      // czml.push(obj2)
 
-  // 1. how to load data
-  data: { 
-    type: "geojson",
-    value: { // GeoJSON
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-        longValue,
-        latValue,
-          0
-        ],
-        "type": "Point"
-      }
+      let h = "H_" + i;
+      let obj3 = czmlObject(h, humidity, time, coords3, [255, 0, 0, 185])
+      // obj3.label = setLableObj(humidity)
+
+      czml.push(obj)
+      czml.push(obj2)
+      czml.push(obj3)
+      
     }
-  },
+    czml[0].clock = {
+      interval: timeSet(data.time[0]) + "/" + timeSet(data.time[data.time.length - 1]),
+      currentTime: timeSet(data.time[0]),
+      multiplier: 100000,
+    }
+    console.log("czml: ", czml);
+    czmlInLayer(czml)
 
-  // 2. how to style
-  marker: {
-    // if there are no styles, default style is used
-    image: "https://github.com/VassaSt/TESTS/blob/main/src/src/typcn_weather-sunny.png",
-  imageSize: 1,
   }
-});
-
-    reearth.camera.flyTo({
-        lng: longValue,
-        lat:latValue,
-        height: 10000,
-        pitch: -1.5,
-    }, {
-        duration: 2
-    });
-}
-
-
 
 
   function czmlInLayer(czml) {
+    layerId = reearth.layers.add({
+      type: "simple",
 
-    if (layerId) {
-      reearth.layers.overrideProperty(layerId, {
-        data: {
-          url: czml,
-        }
-      })
-    } else {
-      layerId = reearth.layers.add({
-        type: "simple",
+      // 1. how to load data
+      data: {
+        type: "czml",
+        url: czml,
+      },
+    });
 
-        // 1. how to load data
-        data: {
-          type: "czml",
-          url: czml,
-        },
-      });
-
-    }
-
-
-    reearth.camera.lookAt({
-      lng: czml[1].position.cartographicDegrees[1],
-      lat: czml[1].position.cartographicDegrees[0],
+    reearth.camera.flyTo({
+      lng: longValue,
+      lat: latValue,
       height: 1500000.0,
       pitch: -1.5,
     }, {
       duration: 2
     });
+    // console.log(layerId);
+  }
 
-    console.log(layerId);
+  async function loadData() {
+    const weatherData = await getWeather();
+    setCzml(weatherData.hourly)
   }
 
 </script>
@@ -290,6 +250,6 @@ send();
 function send() {
 reearth.ui.postMessage({
 property: reearth.widget.property,
-layer: reearth.layers.layers
+layers: reearth.layers.layers
 })
 }
