@@ -21,3 +21,9 @@ function greeter(person: Person) {
 let user = new Student("Jane", "M.", "User");
 
 document.body.textContent = greeter(user);
+
+let userAge: number;
+userAge = 18; 
+
+let myArray: object; 
+myArray =["text", 1, {item: "txt", num: 34,}, [1,2,3,4,5,], true]
