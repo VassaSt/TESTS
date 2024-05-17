@@ -13,4 +13,4 @@ extensions:
             - id: url
               type: url
               title: File URL
-              ui: file
+              ui: country-flags-test.zip

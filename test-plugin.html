@@ -43,203 +43,301 @@ reearth.ui.show(`
     padding: 4px 24px;
   }
 </style>
-<div id="wrapper">
-  <label for="search">Search: </label>
-  <input id="search" type="text">
 
-  <button id="start-btn"> START </button>
+<div id="wrapper">
+  <button type="button" id="start-btn">Start</button>
+  <div id="output"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<!-- response: ok -->
+
+
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.6.9/umd/index.min.js"></script>
+<!-- response: ok -->
+
+
 <script>
-  let reearth, cesium, property, layers, layerId
-  let newDay = new Date();
 
-  const btn = document.getElementById("start-btn")
+  let reearth, cesium, layers, property, zipFileContent;
+  let fileData = []
+  let output = document.getElementById('output');
 
-  let czml = [
-    {
-      id: "document",
-      name: "CZML Polygon - Interpolating References",
-      version: "1.0",
-    }]
-
-  let latValue = "52.52";
-  let longValue = "13.41";
-  let start = "2024-03-16";
-  let end = "2024-03-16";
-  let params = "temperature_2m,relative_humidity_2m,rain";
-  //Temperature, Precipitation, Humidity, Wind, Sunlight,　Frost, Hail, Relative humidity, Soil moisture, Clouds, 
-
-  window.addEventListener("message", function (e) {
+  window.addEventListener("message", async function (e) {
     if (e.source !== parent) return;
-    reearth = e.source.reearth
+    reearth = e.source.reearth;
     layers = reearth.layers.layers;
-    cesium = reearth.Cesium;
+    zipFileContent = e.data.property.default.url;
   })
 
-  async function getWeather() {
-    let apiUrl = "https://archive-api.open-meteo.com/v1/archive?latitude=" + latValue + "&longitude=" + longValue + "&start_date=" + start + "&end_date=" + end + "&hourly=" + params;
+  // default 
 
-    try {
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching weather data:', error);
-      return null;
-    }
+  // function convertData() {
+  //   // Fetch the ZIP file from the specified path
+  //   fetch(zipFileContent)
+  //     .then(response => {
+  //       if (response.ok) {
+  //         console.log(response);
+  //         return response.arrayBuffer(); // Get the file as an array buffer
+  //       }
+  //       throw new Error('Network response was not ok.');
+  //     })
+  //     .then(data => {
+  //       console.log(data);
+  //       let zip = new JSZip(); // Create a new JSZip instance
+  //       return zip.loadAsync(data); // Load the ZIP file data
+  //     })
+  //     .then(zip => {
+  //       output.innerHTML = ''; // Clear any existing content
+  //       // Iterate through each file in the ZIP
+  //       const zipName = Object.keys(zip.files)[0];
+  //       const regex = new RegExp('^' + zipName + '.*\\.png$', 'i'); // Create a regex to match filenames starting with zipName and ending with .png
+  //       const pngRegex = new RegExp('^' + zipName + '(.*)\\.png$', 'i'); // Regex to match filenames starting with zipName and ending with .png, capturing the filename
+  //       const geojsonRegex = new RegExp('^' + zipName + '.*countries\\.geojson$', 'i'); // Regex to match filenames with zipName and ending with countries.geojson
+  //       const jsonRegex = new RegExp('^' + zipName + '.*countries\\.json$', 'i'); // Regex to match filenames with zipName and ending with countries.json
+  //       let geojsonData
+  //       let imageArrData = {}
+
+  //       Object.keys(zip.files).forEach(filename => {
+  //         if (regex.test(filename)) { // Check if the filename matches the regex
+  //           // Convert the file to a base64-encoded string to ge images
+  //           zip.files[filename].async('base64').then(base64 => {
+  //             let img = document.createElement('img');
+  //             img.src = 'data:image/png;base64,' + base64;
+  //             img.style.maxWidth = '100%';
+  //             output.appendChild(img); 
+  //             const match = filename.match(pngRegex);
+  //             const pngFileName = match[1].toUpperCase(); 
+  //             imageArrData[pngFileName] = img.src
+  //           });
+  //         }
+
+  //          // get GeoJSON 
+  //         if (geojsonRegex.test(filename)) { 
+  //           zip.files[filename].async('string').then(content => {
+  //             // Parse the GeoJSON content
+  //             geojsonData = JSON.parse(content);
+  //             handleGeoJSON(geojsonData, imageArrData);
+  //           });
+  //         }
+  //       });
+
+  //     })
+  //     .catch(error => {
+  //       console.error('There was a problem with the fetch operation:', error); 
+  //     });
+  // }
+
+
+  // ------------------------------------------------ 2 -----------------------------
+
+  //  function convertData () {
+  //    fetch(zipFileContent)
+  //      .then(response => {
+  //        if (response.ok) {
+  //          return response.arrayBuffer(); // Get the file as an array buffer
+  //        }
+  //        throw new Error('Network response was not ok.');
+  //      })
+  //      .then(data => {
+  //        return new Promise((resolve, reject) => {
+  //          zip.createReader(new zip.ArrayBufferReader(data), function (reader) {
+  //            reader.getEntries(resolve);
+  //          }, reject);
+  //        });
+  //      })
+  //      .then(entries => {
+  //        output.innerHTML = ''; // Clear any existing content
+
+  //        const zipName = entries[0].filename.split('/')[0];
+  //        const regex = new RegExp('^' + zipName + '.*\\.png$', 'i');
+  //        const pngRegex = new RegExp('^' + zipName + '(.*)\\.png$', 'i');
+  //        const geojsonRegex = new RegExp('^' + zipName + '.*countries\\.geojson$', 'i');
+  //        const jsonRegex = new RegExp('^' + zipName + '.*countries\\.json$', 'i');
+  //        let geojsonData;
+  //        let imageArrData = {};
+
+  //        let promises = entries.map(entry => {
+  //          if (regex.test(entry.filename)) {
+  //            const match = entry.filename.match(pngRegex);
+  //            const pngFileName = match[1].toUpperCase();
+
+  //            return new Promise((resolve, reject) => {
+  //              entry.getData(new zip.Data64URIWriter(), function (uri) {
+  //                let img = document.createElement('img');
+  //                img.src = uri;
+  //                img.style.maxWidth = '100%';
+  //                output.appendChild(img);
+  //                imageArrData[pngFileName] = img.src;
+  //                resolve();
+  //              }, reject);
+  //            });
+  //          }
+
+  //          if (geojsonRegex.test(entry.filename)) {
+  //            return new Promise((resolve, reject) => {
+  //              entry.getData(new zip.TextWriter(), function (text) {
+  //                geojsonData = JSON.parse(text);
+  //                resolve();
+  //              }, reject);
+  //            });
+  //          }
+
+  //          return Promise.resolve();
+  //        });
+
+  //        return Promise.all(promises).then(() => {
+  //          if (geojsonData) {
+  //            handleGeoJSON(geojsonData, imageArrData);
+  //          }
+  //        });
+  //      })
+  //      .catch(error => {
+  //        console.error('There was a problem with the fetch operation:', error);
+  //      });
+  //   };
+
+  // --------------- test libs // JSZip -----------------------------------------------------------
+
+  // function convertData() {
+  //   fetch(zipFileContent)
+  //     .then(response => {
+  //       if (response.ok) {
+  //         return response.arrayBuffer(); // Get the data as an array buffer
+  //       }
+  //       throw new Error('Network response was not ok.');
+  //     })
+  //     .then(data => {
+  //       const zip = new JSZip(); // Create a new JSZip instance
+  //       return zip.loadAsync(data); // Load the zip data
+  //     })
+  //     .then(zip => {
+  //       const files = [];
+  //       zip.forEach((relativePath, zipEntry) => {
+  //         files.push(zipEntry.name);
+  //       });
+  //       console.log('Unzipped files:', files);
+  //       // Further processing of the files can be done here
+  //     })
+  //     .catch(error => {
+  //       console.error('There was a problem with the fetch operation:', error); // Handle any errors
+  //     });
+  // }
+
+
+  // ーーーーーーーーーーーーーー test lib // fflate ---------------------------------------------------
+  function convertData() {
+    fetch(zipFileContent)
+      .then(response => {
+        if (response.ok) {
+          return response.arrayBuffer(); // Get the data as an array buffer
+        }
+        throw new Error('Network response was not ok.');
+      })
+      .then(data => {
+        fflate.unzip(new Uint8Array(data), (err, unzipped) => {
+          if (err) {
+            console.error('There was a problem with unzipping:', err);
+            return;
+          }
+
+          const zipName = Object.keys(unzipped)[0];
+          const regex = new RegExp('^' + zipName + '.*\\.png$', 'i'); // Regex to match filenames starting with zipName and ending with .png
+          const pngRegex = new RegExp('^' + zipName + '(.*)\\.png$', 'i'); // Regex to match filenames starting with zipName and ending with .png, capturing the filename
+          const geojsonRegex = new RegExp('^' + zipName + '.*countries\\.geojson$', 'i'); // Regex to match filenames with zipName and ending with countries.geojson
+          const jsonRegex = new RegExp('^' + zipName + '.*countries\\.json$', 'i'); // Regex to match filenames with zipName and ending with countries.json
+
+
+          let geojsonData
+          let imageArrData = []
+
+          for (const [key, value] of Object.entries(unzipped)) {
+            if (regex.test(key)) {
+              // Get PNG images
+              const match = key.match(pngRegex);
+              const pngFileName = match[1].toUpperCase(); // Captured group containing the name of the PNG file
+              const base64 = btoa(String.fromCharCode(...new Uint8Array(value)));
+              const imgSrc = 'data:image/png;base64,' + base64;
+              imageArrData[pngFileName] = imgSrc;
+              // console.log("PNG file name:", pngFileName);
+              // console.log("Image source:", imgSrc);
+            }
+
+            if (geojsonRegex.test(key)) {
+              // Get GeoJSON data and declare it as a JSON object in geojsonData
+              const content = new TextDecoder().decode(value);
+              geojsonData = JSON.parse(content);
+              // console.log("GeoJSON file:", key);
+              // console.log("GeoJSON data:", geojsonData);
+
+            }
+          }
+
+          handleGeoJSON(geojsonData, imageArrData);
+
+
+        })
+      })
+      .catch(error => {
+        console.error('There was a problem with the fetch operation:', error); // Handle any errors
+      });
   }
 
-  function timeSet(item) {
-    let date = new Date(item);
-    // let result = new Date(date + date.getTimezoneOffset())
-    return date.toJSON();
+
+  function handleGeoJSON(geojson, imageArr) {
+
+    geojson.features.forEach(feature => {
+      const longitude = feature.geometry.coordinates[0];
+      const latitude = feature.geometry.coordinates[1];
+      const country = feature.properties.COUNTRY;
+      const iso = feature.properties.ISO;
+      const url = imageArr[iso];
+
+      addMarker(longitude, latitude, iso, url, country);
+    });
   }
 
-  function setLableObj(item) {
-    let result = {
-      text: item,
-      font: "18px Roboto",
-      showBackground: false,
-      horizontalOrigin: "CENTER",
-      VerticalOrigin: "TOP",
-      style: "FILL",
-      fillColor: {
-        rgba: [255, 255, 255, 255],
-      },
-      outlineWidth: 2,
-      pixelOffset: {
-        cartesian2: [0, 15],
-      },
-    }
-    return result;
-  }
-
-  function czmlObject(i, item, time, coords, color) {
-    let height = item * 1000;
-    //TO DO: create from latValue, longValue more 3 points for polygon
-    let result = {
-      id: i,
-      name: item,
-      availability: time,
-      polygon: {
-        positions: {
-          cartographicDegrees: coords,
-        },
-        material: {
-          solidColor: {
-            color: {
-              rgba: color,
-            },
+  function addMarker(lng, lat, iso, url, country) {
+    let markerId = reearth.layers.add({
+      extensionId: "marker",
+      isVisible: true,
+      title: country,
+      property: {
+        default: {
+          image: url,
+          imageSize: 0.3,
+          location: {
+            lat: lat,
+            lng: lng,
           },
         },
-        height: 0,
-        extrudedHeight: height,
       },
-    }
-
-    return result
-  }
-
-  function getCoords(center) {
-    const radius = 10;
-    const options = { steps: 4, units: 'kilometers' };
-    const circle = turf.circle(center, radius, options);
-    const coordsArray = circle.geometry.coordinates[0]
-    return [coordsArray[0][0], coordsArray[0][1], 0, coordsArray[1][0], coordsArray[1][1], 0, coordsArray[2][0], coordsArray[2][1], 0, coordsArray[3][0], coordsArray[3][1], 0]
-  }
-
-  function getCoords2(center) {
-    let radius = 10;
-    const options = { steps: 4, units: 'kilometers' };
-    const circle = turf.circle(center, radius, options);
-    const center2 = circle.geometry.coordinates[0][0]
-    const radius2 = 10;
-    const circle2 = turf.circle(center2, radius2, options);
-    const coordsArray = circle2.geometry.coordinates[0]
-    return [coordsArray[0][0], coordsArray[0][1], 0, coordsArray[1][0], coordsArray[1][1], 0, coordsArray[2][0], coordsArray[2][1], 0, coordsArray[3][0], coordsArray[3][1], 0]
-  }
-
-
-  btn.addEventListener('click', loadData);
-
-  function setCzml(data) {
-    let center = [longValue, latValue];
-    let coords = getCoords(center)
-    let center2 = [coords[3], coords[4]]
-    let coords2 = getCoords2(center2)
-    let center3 = [coords2[3], coords2[4]]
-    let coords3 = getCoords2(center3)
-
-    for (let i = 0; i < data.time.length; i++) {
-      // const element = data.time[i];
-      const rain = data.rain[i];
-      let temperature = data.temperature_2m[i];
-      let humidity =data.relative_humidity_2m[i]
-
-      let startTime = timeSet(data.time[i]);
-      let endTime = timeSet(new Date(data.time[i]).setMilliseconds(new Date(data.time[i]).getMilliseconds() + 3.6e+6));
-      let time = startTime + "/" + endTime;
-
-      let x = "T_" + i;
-      let obj = czmlObject(x, temperature, time, coords, [0, 0, 255, 185])
-      // TO DO one more object for lable (point or box)
-      // obj.label = setLableObj(temperature)
-
-      let y = "R_" + i;
-      let obj2 = czmlObject(y, rain, time, coords2, [0, 255, 0, 185])
-      // obj2.label = setLableObj(rain)
-      // czml.push(obj)
-      // czml.push(obj2)
-
-      let h = "H_" + i;
-      let obj3 = czmlObject(h, humidity, time, coords3, [255, 0, 0, 185])
-      // obj3.label = setLableObj(humidity)
-
-      czml.push(obj)
-      czml.push(obj2)
-      czml.push(obj3)
-      
-    }
-    czml[0].clock = {
-      interval: timeSet(data.time[0]) + "/" + timeSet(data.time[data.time.length - 1]),
-      currentTime: timeSet(data.time[0]),
-      multiplier: 100000,
-    }
-    console.log("czml: ", czml);
-    czmlInLayer(czml)
-
-  }
-
-
-  function czmlInLayer(czml) {
-    layerId = reearth.layers.add({
-      type: "simple",
-
-      // 1. how to load data
-      data: {
-        type: "czml",
-        url: czml,
+      infobox: {
+        blocks: [
+          {
+            extensionId: "textblock",
+            pluginId: "reearth",
+            property: {
+              default: {
+              }
+            }
+          }
+        ],
       },
+      tags: [],
     });
 
     reearth.camera.flyTo({
-      lng: longValue,
-      lat: latValue,
-      height: 1500000.0,
-      pitch: -1.5,
+      lng: lng,
+      lat: lat,
+      height: 100000,
     }, {
       duration: 2
     });
-    // console.log(layerId);
   }
 
-  async function loadData() {
-    const weatherData = await getWeather();
-    setCzml(weatherData.hourly)
-  }
+  document.getElementById('start-btn').addEventListener('click', convertData)
 
 </script>
 `,);
