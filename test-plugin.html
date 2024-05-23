@@ -24,8 +24,8 @@ reearth.ui.show(`
 
   #wrapper {
     box-sizing: border-box;
-    max-width: 210px;
-    max-height: 560px;
+    max-width: 50px;
+    max-height: 50px;
     border-radius: 4px;
     background-color: #ffffff;
     padding: 12px;
@@ -45,189 +45,32 @@ reearth.ui.show(`
 </style>
 
 <div id="wrapper">
-  <button type="button" id="start-btn">Start</button>
-  <div id="output"></div>
+  <div class="logo">Logo</div>
 </div>
 
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-<!-- response: ok -->
-
-
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.6.9/umd/index.min.js"></script>
-<!-- response: ok -->
-
 
 <script>
 
-  let reearth, cesium, layers, property, zipFileContent;
-  let fileData = []
-  let output = document.getElementById('output');
+  let reearth, cesium, layers, property, newProperty, markerId;
 
   window.addEventListener("message", async function (e) {
     if (e.source !== parent) return;
     reearth = e.source.reearth;
+    newProperty = e.data.property;
     layers = reearth.layers.layers;
-    zipFileContent = e.data.property.default.url;
+
+    if (JSON.stringify(property) != JSON.stringify(newProperty)) {
+      property = newProperty;
+      zipFileContent = property.default.url;
+      CleanAll()
+      convertData(zipFileContent)
+    }
+
   })
 
-  // default 
 
-  // function convertData() {
-  //   // Fetch the ZIP file from the specified path
-  //   fetch(zipFileContent)
-  //     .then(response => {
-  //       if (response.ok) {
-  //         console.log(response);
-  //         return response.arrayBuffer(); // Get the file as an array buffer
-  //       }
-  //       throw new Error('Network response was not ok.');
-  //     })
-  //     .then(data => {
-  //       console.log(data);
-  //       let zip = new JSZip(); // Create a new JSZip instance
-  //       return zip.loadAsync(data); // Load the ZIP file data
-  //     })
-  //     .then(zip => {
-  //       output.innerHTML = ''; // Clear any existing content
-  //       // Iterate through each file in the ZIP
-  //       const zipName = Object.keys(zip.files)[0];
-  //       const regex = new RegExp('^' + zipName + '.*\\.png$', 'i'); // Create a regex to match filenames starting with zipName and ending with .png
-  //       const pngRegex = new RegExp('^' + zipName + '(.*)\\.png$', 'i'); // Regex to match filenames starting with zipName and ending with .png, capturing the filename
-  //       const geojsonRegex = new RegExp('^' + zipName + '.*countries\\.geojson$', 'i'); // Regex to match filenames with zipName and ending with countries.geojson
-  //       const jsonRegex = new RegExp('^' + zipName + '.*countries\\.json$', 'i'); // Regex to match filenames with zipName and ending with countries.json
-  //       let geojsonData
-  //       let imageArrData = {}
-
-  //       Object.keys(zip.files).forEach(filename => {
-  //         if (regex.test(filename)) { // Check if the filename matches the regex
-  //           // Convert the file to a base64-encoded string to ge images
-  //           zip.files[filename].async('base64').then(base64 => {
-  //             let img = document.createElement('img');
-  //             img.src = 'data:image/png;base64,' + base64;
-  //             img.style.maxWidth = '100%';
-  //             output.appendChild(img); 
-  //             const match = filename.match(pngRegex);
-  //             const pngFileName = match[1].toUpperCase(); 
-  //             imageArrData[pngFileName] = img.src
-  //           });
-  //         }
-
-  //          // get GeoJSON 
-  //         if (geojsonRegex.test(filename)) { 
-  //           zip.files[filename].async('string').then(content => {
-  //             // Parse the GeoJSON content
-  //             geojsonData = JSON.parse(content);
-  //             handleGeoJSON(geojsonData, imageArrData);
-  //           });
-  //         }
-  //       });
-
-  //     })
-  //     .catch(error => {
-  //       console.error('There was a problem with the fetch operation:', error); 
-  //     });
-  // }
-
-
-  // ------------------------------------------------ 2 -----------------------------
-
-  //  function convertData () {
-  //    fetch(zipFileContent)
-  //      .then(response => {
-  //        if (response.ok) {
-  //          return response.arrayBuffer(); // Get the file as an array buffer
-  //        }
-  //        throw new Error('Network response was not ok.');
-  //      })
-  //      .then(data => {
-  //        return new Promise((resolve, reject) => {
-  //          zip.createReader(new zip.ArrayBufferReader(data), function (reader) {
-  //            reader.getEntries(resolve);
-  //          }, reject);
-  //        });
-  //      })
-  //      .then(entries => {
-  //        output.innerHTML = ''; // Clear any existing content
-
-  //        const zipName = entries[0].filename.split('/')[0];
-  //        const regex = new RegExp('^' + zipName + '.*\\.png$', 'i');
-  //        const pngRegex = new RegExp('^' + zipName + '(.*)\\.png$', 'i');
-  //        const geojsonRegex = new RegExp('^' + zipName + '.*countries\\.geojson$', 'i');
-  //        const jsonRegex = new RegExp('^' + zipName + '.*countries\\.json$', 'i');
-  //        let geojsonData;
-  //        let imageArrData = {};
-
-  //        let promises = entries.map(entry => {
-  //          if (regex.test(entry.filename)) {
-  //            const match = entry.filename.match(pngRegex);
-  //            const pngFileName = match[1].toUpperCase();
-
-  //            return new Promise((resolve, reject) => {
-  //              entry.getData(new zip.Data64URIWriter(), function (uri) {
-  //                let img = document.createElement('img');
-  //                img.src = uri;
-  //                img.style.maxWidth = '100%';
-  //                output.appendChild(img);
-  //                imageArrData[pngFileName] = img.src;
-  //                resolve();
-  //              }, reject);
-  //            });
-  //          }
-
-  //          if (geojsonRegex.test(entry.filename)) {
-  //            return new Promise((resolve, reject) => {
-  //              entry.getData(new zip.TextWriter(), function (text) {
-  //                geojsonData = JSON.parse(text);
-  //                resolve();
-  //              }, reject);
-  //            });
-  //          }
-
-  //          return Promise.resolve();
-  //        });
-
-  //        return Promise.all(promises).then(() => {
-  //          if (geojsonData) {
-  //            handleGeoJSON(geojsonData, imageArrData);
-  //          }
-  //        });
-  //      })
-  //      .catch(error => {
-  //        console.error('There was a problem with the fetch operation:', error);
-  //      });
-  //   };
-
-  // --------------- test libs // JSZip -----------------------------------------------------------
-
-  // function convertData() {
-  //   fetch(zipFileContent)
-  //     .then(response => {
-  //       if (response.ok) {
-  //         return response.arrayBuffer(); // Get the data as an array buffer
-  //       }
-  //       throw new Error('Network response was not ok.');
-  //     })
-  //     .then(data => {
-  //       const zip = new JSZip(); // Create a new JSZip instance
-  //       return zip.loadAsync(data); // Load the zip data
-  //     })
-  //     .then(zip => {
-  //       const files = [];
-  //       zip.forEach((relativePath, zipEntry) => {
-  //         files.push(zipEntry.name);
-  //       });
-  //       console.log('Unzipped files:', files);
-  //       // Further processing of the files can be done here
-  //     })
-  //     .catch(error => {
-  //       console.error('There was a problem with the fetch operation:', error); // Handle any errors
-  //     });
-  // }
-
-
-  // ーーーーーーーーーーーーーー test lib // fflate ---------------------------------------------------
-  function convertData() {
+  function convertData(zipFileContent) {
     fetch(zipFileContent)
       .then(response => {
         if (response.ok) {
@@ -248,7 +91,6 @@ reearth.ui.show(`
           const geojsonRegex = new RegExp('^' + zipName + '.*countries\\.geojson$', 'i'); // Regex to match filenames with zipName and ending with countries.geojson
           const jsonRegex = new RegExp('^' + zipName + '.*countries\\.json$', 'i'); // Regex to match filenames with zipName and ending with countries.json
 
-
           let geojsonData
           let imageArrData = []
 
@@ -256,27 +98,20 @@ reearth.ui.show(`
             if (regex.test(key)) {
               // Get PNG images
               const match = key.match(pngRegex);
-              const pngFileName = match[1].toUpperCase(); // Captured group containing the name of the PNG file
+              const pngFileName = match[1].toUpperCase(); // Captured the name of the PNG file to compare it with ISO in GeoJson file to upload correct images 
               const base64 = btoa(String.fromCharCode(...new Uint8Array(value)));
               const imgSrc = 'data:image/png;base64,' + base64;
               imageArrData[pngFileName] = imgSrc;
-              // console.log("PNG file name:", pngFileName);
-              // console.log("Image source:", imgSrc);
             }
 
             if (geojsonRegex.test(key)) {
               // Get GeoJSON data and declare it as a JSON object in geojsonData
               const content = new TextDecoder().decode(value);
               geojsonData = JSON.parse(content);
-              // console.log("GeoJSON file:", key);
-              // console.log("GeoJSON data:", geojsonData);
-
             }
           }
 
           handleGeoJSON(geojsonData, imageArrData);
-
-
         })
       })
       .catch(error => {
@@ -286,27 +121,57 @@ reearth.ui.show(`
 
 
   function handleGeoJSON(geojson, imageArr) {
-
     geojson.features.forEach(feature => {
       const longitude = feature.geometry.coordinates[0];
       const latitude = feature.geometry.coordinates[1];
       const country = feature.properties.COUNTRY;
       const iso = feature.properties.ISO;
       const url = imageArr[iso];
-
-      addMarker(longitude, latitude, iso, url, country);
+      addMarker(longitude, latitude, url, country);
     });
   }
 
-  function addMarker(lng, lat, iso, url, country) {
-    let markerId = reearth.layers.add({
+
+  function addMarker(lng, lat, url, country) {
+
+// if (markerId) {
+//    reearth.layers.overrideProperty(markerId, {
+//        title: country,
+//        property: {
+//          default: {
+//            image: url,
+//            imageSize: 0.2,
+//            location: {
+//              lat: lat,
+//              lng: lng,
+//            },
+//          },
+//        },
+//        infobox: {
+//          blocks: [
+//            {
+//              extensionId: "imageblock",
+//              pluginId: "reearth",
+//              property: {
+//                default: {
+//                  image: url,
+//                  fullSize: true
+//                }
+//              }
+//            }
+//          ],
+//        },
+//    })
+// } else {
+
+    markerId = reearth.layers.add({
       extensionId: "marker",
       isVisible: true,
       title: country,
       property: {
         default: {
           image: url,
-          imageSize: 0.3,
+          imageSize: 0.2,
           location: {
             lat: lat,
             lng: lng,
@@ -316,17 +181,19 @@ reearth.ui.show(`
       infobox: {
         blocks: [
           {
-            extensionId: "textblock",
+            extensionId: "imageblock",
             pluginId: "reearth",
             property: {
               default: {
+                image: url,
+                fullSize: true
               }
             }
           }
         ],
       },
-      tags: [],
     });
+// }
 
     reearth.camera.flyTo({
       lng: lng,
@@ -335,9 +202,18 @@ reearth.ui.show(`
     }, {
       duration: 2
     });
+
   }
 
-  document.getElementById('start-btn').addEventListener('click', convertData)
+  function CleanAll() {
+    let filteredLayers = reearth.layers.findAll(layer => layer.type === 'marker');
+
+    filteredLayers.forEach(layer => {
+      reearth.layers.hide(layer.id)
+    });
+
+  }
+
 
 </script>
 `,);
@@ -351,3 +227,13 @@ property: reearth.widget.property,
 layers: reearth.layers.layers
 })
 }
+
+reearth.on("message", (msg) => {
+if (msg.type == "clean") {
+reearth.layers.overrideProperty(msg.layerId, {
+default: {
+imageSize: 0,
+},
+})
+}
+})
