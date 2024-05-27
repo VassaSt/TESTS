@@ -1,0 +1,12 @@
+.set-bg{
+  width: 250px;
+  height: 40px;
+  background: #7fffd0;
+}
+
+.set-text{
+    width: 250px;
+  height: 40px;
+  background-color: blueviolet;
+  color: aliceblue;
+}
