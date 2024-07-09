@@ -1,11 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
 </head>
+
 <body>
-  
+  <style>
+    body {
+      box-sizing: border-box;
+      background: black;
+    }
+
+    #wrapper {
+      display: flex;
+      flex-direction: column;
+      width: 320px;
+      height: 100%;
+      margin: 12px;
+      background: #fff;
+      color: black;
+    }
+
+    #add-btn {
+      width: 100px;
+      height: 32px;
+      text-align: center;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 32px;
+      margin: 4px;
+      border: 1px solid #c3c3c3;
+    }
+
+    .item-img {
+      width: 32px;
+      height: 32px;
+      background: url('data:image/svg+xml,<svg width="34" height="35" viewBox="0 0 34 35" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M27.222 27.3294C28.9778 27.3294 30.4122 25.8749 30.4122 24.095C30.4122 21.9455 27.222 18.4379 27.222 18.4379C27.222 18.4379 24.0319 21.9455 24.0319 24.095C24.0319 25.8749 25.4662 27.3294 27.222 27.3294ZM12.0707 25.5575C12.356 25.8428 12.818 25.8428 13.0993 25.5575L23.389 15.2718C23.6743 14.9866 23.6743 14.5245 23.389 14.2432L13.1033 3.95753C13.0792 3.93343 13.0511 3.90932 13.0229 3.88923L9.88097 0.747264C9.81247 0.679641 9.72008 0.641724 9.62383 0.641724C9.52757 0.641724 9.43519 0.679641 9.36668 0.747264L7.43811 2.67584C7.37049 2.74434 7.33257 2.83672 7.33257 2.93298C7.33257 3.02924 7.37049 3.12162 7.43811 3.19012L10.1381 5.89012L1.78901 14.2432C1.50374 14.5285 1.50374 14.9906 1.78901 15.2718L12.0707 25.5575ZM12.589 7.53343L19.777 14.7214H5.40508L12.589 7.53343V7.53343ZM32.7506 30.2102H1.25061C1.07383 30.2102 0.929184 30.3549 0.929184 30.5316V33.7459C0.929184 33.9227 1.07383 34.0674 1.25061 34.0674H32.7506C32.9274 34.0674 33.072 33.9227 33.072 33.7459V30.5316C33.072 30.3549 32.9274 30.2102 32.7506 30.2102Z" fill="black" fill-opacity="0.85" /></svg>') no-repeat center;
+    }
+
+
+    .item-btn {
+      width: 32px;
+      height: 32px;
+    }
+
+    .remove {
+      background-color: brown;
+      cursor: pointer;
+    }
+
+    .edit {
+      background-color: aquamarine;
+      cursor: pointer;
+    }
+
+    #library-container{
+      margin: 12px;
+    }
+
+    #country-select{
+      width: 100%;
+    }
+
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #00474F; /* Cyan-9 */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#content {
+  text-align: center;
+}
+  </style>
+
+  <div id="wrapper">
+
+    <div id="loading-container" class="loading-container">
+      <div class="spinner"></div>
+    </div>
+    <div id="content" style="display: none;">
+
+    Layers : <button id="add-btn"> Add Layer </button>
+<div id="item-container">
+    <!-- <div class="item">
+          <img class="item-img" alt="">
+          <p class="item-text">Some text (type) </p>
+          <button class="item-btn remove">btn</button>
+          <button class="item-btn edit">btn</button>
+        </div> -->
+</div>
+
+
+    <div id="library-container">
+      <select name="" id="country-select">
+        <option value="Japan">Japan</option>
+        <option value="USA">USA</option>
+        <option value="Chile">Chile</option>
+      </select>
+      
+    </div>
+  </div>
+
+
+
+  <script>
+    
+  document.addEventListener('DOMContentLoaded', function () {
+    // Simulate a loading process
+    setTimeout(function () {
+      // Hide the loading animation
+      document.getElementById('loading-container').style.display = 'none';
+      // Show the content
+      document.getElementById('content').style.display = 'block';
+    }, 3000); // Simulate a 3-second loading time
+  });
+
+
+
+    document.getElementById('add-btn').addEventListener('click', addItem)
+
+    function addItem() {
+      const item = document.createElement('div')
+      item.classList.add("item")
+
+      const itemImg = document.createElement('img')
+      itemImg.classList.add("item-img")
+
+      const itemText = document.createElement('p')
+      itemText.classList.add("item-text")
+      itemText.innerHTML = "Some text (type)"
+
+
+      const itemRemoveBtn = document.createElement('button')
+      itemRemoveBtn.classList.add("item-btn")
+       itemRemoveBtn.classList.add("remove")
+
+      const itemEditBtn = document.createElement('button')
+      itemEditBtn.classList.add("item-btn")
+      itemEditBtn.classList.add("edit")
+
+      item.appendChild(itemImg)
+      item.appendChild(itemText)
+      item.appendChild(itemRemoveBtn)
+      item.appendChild(itemEditBtn)
+      document.getElementById("item-container").appendChild(item)
+
+    }
+
+  </script>
 </body>
+
 </html>
